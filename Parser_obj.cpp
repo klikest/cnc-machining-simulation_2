@@ -8,11 +8,11 @@
 
 using namespace std;
 
-const char* name_blank = "Models\\blank.stl";
+const char* name_blank = "Models\\razvertka.stl";
 const char* p_babka = "Models\\p_b.stl";
-const char* z_babka = "Models\\z_b.stl";
+const char* z_babka = "Models\\z_b2.stl";
 const char* turn_table = "Models\\table.stl";
-const char* tool= "Models\\tool.stl";
+const char* tool= "Models\\tool4.stl";
 const char* name_axis = "Models\\arrow.stl";
 
 

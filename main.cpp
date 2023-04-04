@@ -92,6 +92,11 @@ std::vector<float> rotatePointsAroundAxis(std::vector<float> points, std::vector
 }
 
 
+std::vector<float> point = { 0,0,0 };
+std::vector<float> start = { 0,0.5,0 };
+std::vector<float> end = { 1,0.5,0 };
+
+
 std::vector<int> get_ind(std::vector<float> vert)
 {	
 	std::vector<int> indices;
@@ -200,14 +205,14 @@ void move(float x, float y, float z, VBO VBO_blank, VBO VBO_p_b, VBO VBO_table, 
 	glBufferData(GL_ARRAY_BUFFER, p_b_vert_.size() * sizeof(float), p_b_vert_.data(), GL_DYNAMIC_DRAW);
 }
 
-void move_G(float x, float y, float z, VBO VBO_blank, VBO VBO_p_b, VBO VBO_table, VBO VBO_tool, VBO VBO_z_b)
+void move_G(float x, float y, float z, float c, VBO VBO_blank, VBO VBO_p_b, VBO VBO_table, VBO VBO_tool, VBO VBO_z_b)
 {	///////////////////  X
 	x_Pos = x;
-	for (int i = 0; i < blank_vert.size(); i += 6) { blank_vert_[i + 2] = blank_vert[i+2] - x;}
+	//for (int i = 0; i < blank_vert.size(); i += 6) { blank_vert_[i + 2] = blank_vert[i+2] - x;}
 	for (int i = 0; i < table_vert_.size(); i += 6){table_vert_[i + 2] = table_vert[i+2] - x;}
 	for (int i = 0; i < z_b_vert.size(); i += 6){z_b_vert_[i + 2] = z_b_vert[i+2] - x;}
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_blank.ID);
-	glBufferData(GL_ARRAY_BUFFER, blank_vert_.size() * sizeof(float), blank_vert_.data(), GL_DYNAMIC_DRAW);
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO_blank.ID);
+	//glBufferData(GL_ARRAY_BUFFER, blank_vert_.size() * sizeof(float), blank_vert_.data(), GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_z_b.ID);
 	glBufferData(GL_ARRAY_BUFFER, z_b_vert_.size() * sizeof(float), z_b_vert_.data(), GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_table.ID);
@@ -226,14 +231,82 @@ void move_G(float x, float y, float z, VBO VBO_blank, VBO VBO_p_b, VBO VBO_table
 	glBufferData(GL_ARRAY_BUFFER, p_b_vert_.size() * sizeof(float), p_b_vert_.data(), GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_tool.ID);
 	glBufferData(GL_ARRAY_BUFFER, tool_vert_.size() * sizeof(float), tool_vert_.data(), GL_DYNAMIC_DRAW);
+
+	/////////////////  c
+	c_Pos = c;
+	blank_vert_ = rotatePointsAroundAxis(blank_vert, { 0,1,0 }, -M_PI/2 );
+	blank_vert_ = rotatePointsAroundAxis(blank_vert_, { 1,0,0 }, c_Pos * M_PI / 180);
+
+	blank_vert_ = rotatePointsAroundAxis(blank_vert_, { 0,1,0 }, M_PI / 2);
+	for (int i = 0; i < blank_vert_.size(); i += 6)
+	{
+		blank_vert_[i + 1] += 100;
+	}
+	for (int i = 0; i < blank_vert_.size(); i += 6) { blank_vert_[i + 2] = blank_vert_[i + 2] - x; }
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_blank.ID);
+	glBufferData(GL_ARRAY_BUFFER, blank_vert_.size() * sizeof(float), blank_vert_.data(), GL_DYNAMIC_DRAW);
+
 }
+
+
+
+void start_g_code(int i, std::vector<std::vector<float>> g_code)
+{
+	x_Pos = g_code[i][0];
+	y_Pos = g_code[i][1];
+	z_Pos = g_code[i][2];
+	c_Pos = g_code[i][3];
+}
+
+
+
+std::vector<std::vector<float>> g_code;
+
 
 int main()
 {
+	std::vector<float> st = { 44.5, 49, -9.8, 0 };
+	g_code.push_back({ 44.5, 49, -9.8, 0 });
+
+	for (float i = 0; i < 43; i += 0.1)
+	{
+		g_code.push_back({55 +i, 49, -9.8, 0 });
+	}
+
+
+	for (float i = 0; i < 45; i += 0.1)
+	{
+		g_code.push_back({ 55 +45 - i, 49, -9.8, 0 });
+	}
+
+
+	for (float i = 0; i < 43; i += 0.2)
+	{
+		g_code.push_back({ 55 , 49, -9.8, -i });
+	}
+
+
+
+
+
 
 	blank_vert = Parse_vertices_blank();
-	blank_vert = rotatePointsAroundAxis(blank_vert, { 1,0,0 }, -M_PI / 2);
+	
+	for (int i = 0; i < blank_vert.size(); i += 6)
+	{
+		blank_vert[i] += 25;
+	}
+
+	blank_vert = rotatePointsAroundAxis(blank_vert, { 0,1,0 }, M_PI / 2);
 	blank_vert_ = blank_vert;
+
+
+
+	for (int i = 0; i < blank_vert_.size(); i += 6)
+	{
+		blank_vert_[i+1] += 100;
+	}
+	
 	blank_ind = get_ind(blank_vert);
 
 	p_b_vert = Parse_vertices_p_babka();
@@ -260,8 +333,6 @@ int main()
 	arrow_vert = rotatePointsAroundAxis(arrow_vert, { 1,0,0 }, -M_PI / 2);
 	arrow_vert_ = arrow_vert;
 	arrow_ind = get_ind(arrow_vert);
-
-
 
 	// Initialize GLFW
 	glfwInit();
@@ -302,8 +373,6 @@ int main()
 	VAO_tool.Unbind();
 	VBO_tool.Unbind();
 	EBO_tool.Unbind();
-
-
 
 	Shader p_b_shaderProgram("p_b.vert", "p_b.frag");
 	VAO VAO_p_b;
@@ -385,8 +454,6 @@ int main()
 
 	axis_ind = get_ind(axis_vert);
 	
-
-
 	Shader cords_shaderProgram("cords.vert", "cords.frag");
 	VAO VAO_cords;
 	VAO_cords.Bind();
@@ -462,7 +529,7 @@ int main()
 	bool draw_cords = false;
 	bool draw_src_mesh = false;
 	bool draw_scene = false;
-
+	bool draw_g = false;
 
 	glfwSwapInterval(1);
 
@@ -474,10 +541,14 @@ int main()
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 
+
+
+	int max_it = g_code.size();
+	int now_it = 0;
+
+
 	while (!glfwWindowShouldClose(window))
 	{
-
-
 
 		crntTime = glfwGetTime();
 		timeDiff = crntTime - prevTime;
@@ -494,7 +565,6 @@ int main()
 
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -547,7 +617,7 @@ int main()
 		camera.Matrix(cords_shaderProgram, "camMatrix");
 
 
-		move_G(x_Pos, y_Pos, z_Pos, VBO_blank, VBO_p_b, VBO_table, VBO_tool, VBO_z_b);
+		move_G(x_Pos, y_Pos, z_Pos, c_Pos, VBO_blank, VBO_p_b, VBO_table, VBO_tool, VBO_z_b);
 
 		if (draw_scene)
 		{
@@ -575,9 +645,11 @@ int main()
 		ImGui::Begin("Processing info");
 		ImGui::Checkbox("Draw scene", &draw_scene);
 		ImGui::Checkbox("Draw coords", &draw_cords);
-		ImGui::SliderFloat("X_coord", &x_Pos, -100.0f, 100.0f);
-		ImGui::SliderFloat("Y_coord", &y_Pos, -100.0f, 100.0f);
-		ImGui::SliderFloat("Z_coord", &z_Pos, -100.0f, 100.0f);
+		ImGui::SliderFloat("X_coord", &x_Pos, -150.0f, 150.0f);
+		ImGui::SliderFloat("Y_coord", &y_Pos, -150.0f, 150.0f);
+		ImGui::SliderFloat("Z_coord", &z_Pos, -150.0f, 150.0f);
+		ImGui::SliderFloat("A_coord", &a_Pos, -360.0f, 360.0f);
+		ImGui::SliderFloat("C_coord", &c_Pos, -360.0f, 360.0f);
 
 		ImGui::Text(x_cord.c_str());
 		ImGui::Text(y_cord.c_str());
@@ -587,6 +659,19 @@ int main()
 
 		if (ImGui::Button("Set to zero"))
 			coords_to_zero(VBO_blank, VBO_p_b, VBO_table, VBO_tool, VBO_z_b);
+
+
+
+			start_g_code(now_it, g_code);
+			if (now_it < max_it-1)
+			{
+				now_it += 1;
+			}
+			else
+			{
+				now_it = 0;
+			}
+			
 
 		ImGui::End();
 
