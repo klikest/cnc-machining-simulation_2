@@ -205,18 +205,20 @@ void move(float x, float y, float z, VBO VBO_blank, VBO VBO_p_b, VBO VBO_table, 
 	glBufferData(GL_ARRAY_BUFFER, p_b_vert_.size() * sizeof(float), p_b_vert_.data(), GL_DYNAMIC_DRAW);
 }
 
-void move_G(float x, float y, float z, float c, VBO VBO_blank, VBO VBO_p_b, VBO VBO_table, VBO VBO_tool, VBO VBO_z_b)
+void move_G(float x, float y, float z, float c, VBO VBO_blank, VBO VBO_p_b, VBO VBO_table, VBO VBO_tool, VBO VBO_z_b, VBO VBO_cords)
 {	///////////////////  X
 	x_Pos = x;
 	//for (int i = 0; i < blank_vert.size(); i += 6) { blank_vert_[i + 2] = blank_vert[i+2] - x;}
 	for (int i = 0; i < table_vert_.size(); i += 6){table_vert_[i + 2] = table_vert[i+2] - x;}
 	for (int i = 0; i < z_b_vert.size(); i += 6){z_b_vert_[i + 2] = z_b_vert[i+2] - x;}
-	//glBindBuffer(GL_ARRAY_BUFFER, VBO_blank.ID);
-	//glBufferData(GL_ARRAY_BUFFER, blank_vert_.size() * sizeof(float), blank_vert_.data(), GL_DYNAMIC_DRAW);
+	for (int i = 0; i < axis_vert_.size(); i += 6) { axis_vert_[i + 2] = axis_vert[i + 2] - x; }
+
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_z_b.ID);
 	glBufferData(GL_ARRAY_BUFFER, z_b_vert_.size() * sizeof(float), z_b_vert_.data(), GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_table.ID);
 	glBufferData(GL_ARRAY_BUFFER, table_vert_.size() * sizeof(float), table_vert_.data(), GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_cords.ID);
+	glBufferData(GL_ARRAY_BUFFER, axis_vert_.size() * sizeof(float), axis_vert_.data(), GL_DYNAMIC_DRAW);
 
 	///////////////////  Y
 	y_Pos = y;
@@ -256,6 +258,7 @@ void start_g_code(int i, std::vector<std::vector<float>> g_code)
 	y_Pos = g_code[i][1];
 	z_Pos = g_code[i][2];
 	c_Pos = g_code[i][3];
+	std::cout << "X" << x_Pos << " Y" << y_Pos << " Z" << z_Pos << " C" << c_Pos << std::endl;
 }
 
 
@@ -266,32 +269,32 @@ std::vector<std::vector<float>> g_code;
 int main()
 {
 
-	for (float i = 0; i < 45; i += 0.2)
+	for (float i = 0; i < 40; i += 0.2)
 	{
-		g_code.push_back({55 +i, 49, -9.8, 0 });
+		g_code.push_back({55 +i, 30, -25, 0 });
+	}
+
+
+	for (float i = 0; i < 40; i += 0.2)
+	{
+		g_code.push_back({ 55 +40 - i, 30, -25, 0 });
 	}
 
 
 	for (float i = 0; i < 45; i += 0.2)
 	{
-		g_code.push_back({ 55 +45 - i, 49, -9.8, 0 });
+		g_code.push_back({ 55 , 30, -25, i });
+	}
+
+	for (float i = 0; i < 40; i += 0.2)
+	{
+		g_code.push_back({ 55 + i, 30, -25, 45 });
 	}
 
 
-	for (float i = 0; i < 43; i += 0.2)
+	for (float i = 0; i < 40; i += 0.2)
 	{
-		g_code.push_back({ 55 , 49, -9.8, i });
-	}
-
-	for (float i = 0; i < 45; i += 0.2)
-	{
-		g_code.push_back({ 55 + i, 49, -9.8, 45 });
-	}
-
-
-	for (float i = 0; i < 45; i += 0.2)
-	{
-		g_code.push_back({ 55 + 45 - i, 49, -9.8, 45 });
+		g_code.push_back({ 55 + 40 - i, 30, -25, 45 });
 	}
 
 
@@ -460,13 +463,21 @@ int main()
 		axis_vert.push_back(arrow_vert[i]);
 	}
 
+	for (int i = 0; i < axis_vert.size(); i += 6)
+	{
+		axis_vert[i+1] += 100;
+		axis_vert[i + 2] -= 25;
+	}
+
+
+	axis_vert_ = axis_vert;
 
 	axis_ind = get_ind(axis_vert);
 	
 	Shader cords_shaderProgram("cords.vert", "cords.frag");
 	VAO VAO_cords;
 	VAO_cords.Bind();
-	VBO VBO_cords(axis_vert.data(), axis_vert.size() * sizeof(float));
+	VBO VBO_cords(axis_vert_.data(), axis_vert_.size() * sizeof(float));
 	EBO EBO_cords(axis_ind.data(), axis_ind.size() * sizeof(int));
 	VAO_cords.LinkAttrib(VBO_cords, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
 	VAO_cords.LinkAttrib(VBO_cords, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -626,7 +637,7 @@ int main()
 		camera.Matrix(cords_shaderProgram, "camMatrix");
 
 
-		move_G(x_Pos, y_Pos, z_Pos, c_Pos, VBO_blank, VBO_p_b, VBO_table, VBO_tool, VBO_z_b);
+		move_G(x_Pos, y_Pos, z_Pos, c_Pos, VBO_blank, VBO_p_b, VBO_table, VBO_tool, VBO_z_b, VBO_cords);
 
 		if (draw_scene)
 		{
@@ -669,7 +680,7 @@ int main()
 		if (ImGui::Button("Set to zero"))
 			coords_to_zero(VBO_blank, VBO_p_b, VBO_table, VBO_tool, VBO_z_b);
 
-		ImGui::Checkbox("Draw G", &draw_g);
+		ImGui::Checkbox("Start G", &draw_g);
 		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
