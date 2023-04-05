@@ -235,7 +235,7 @@ void move_G(float x, float y, float z, float c, VBO VBO_blank, VBO VBO_p_b, VBO 
 	/////////////////  c
 	c_Pos = c;
 	blank_vert_ = rotatePointsAroundAxis(blank_vert, { 0,1,0 }, -M_PI/2 );
-	blank_vert_ = rotatePointsAroundAxis(blank_vert_, { 1,0,0 }, c_Pos * M_PI / 180);
+	blank_vert_ = rotatePointsAroundAxis(blank_vert_, { 1,0,0 }, -c_Pos * M_PI / 180);
 
 	blank_vert_ = rotatePointsAroundAxis(blank_vert_, { 0,1,0 }, M_PI / 2);
 	for (int i = 0; i < blank_vert_.size(); i += 6)
@@ -265,16 +265,14 @@ std::vector<std::vector<float>> g_code;
 
 int main()
 {
-	std::vector<float> st = { 44.5, 49, -9.8, 0 };
-	g_code.push_back({ 44.5, 49, -9.8, 0 });
 
-	for (float i = 0; i < 43; i += 0.1)
+	for (float i = 0; i < 45; i += 0.2)
 	{
 		g_code.push_back({55 +i, 49, -9.8, 0 });
 	}
 
 
-	for (float i = 0; i < 45; i += 0.1)
+	for (float i = 0; i < 45; i += 0.2)
 	{
 		g_code.push_back({ 55 +45 - i, 49, -9.8, 0 });
 	}
@@ -282,7 +280,18 @@ int main()
 
 	for (float i = 0; i < 43; i += 0.2)
 	{
-		g_code.push_back({ 55 , 49, -9.8, -i });
+		g_code.push_back({ 55 , 49, -9.8, i });
+	}
+
+	for (float i = 0; i < 45; i += 0.2)
+	{
+		g_code.push_back({ 55 + i, 49, -9.8, 45 });
+	}
+
+
+	for (float i = 0; i < 45; i += 0.2)
+	{
+		g_code.push_back({ 55 + 45 - i, 49, -9.8, 45 });
 	}
 
 
@@ -660,8 +669,14 @@ int main()
 		if (ImGui::Button("Set to zero"))
 			coords_to_zero(VBO_blank, VBO_p_b, VBO_table, VBO_tool, VBO_z_b);
 
+		ImGui::Checkbox("Draw G", &draw_g);
+		ImGui::End();
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 
+		if (draw_g)
+		{
 			start_g_code(now_it, g_code);
 			if (now_it < max_it-1)
 			{
@@ -671,12 +686,9 @@ int main()
 			{
 				now_it = 0;
 			}
+		}
 			
-
-		ImGui::End();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		
 				
 		glfwSwapBuffers(window);
 		glfwPollEvents();
